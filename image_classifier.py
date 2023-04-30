@@ -12,7 +12,8 @@ model = tf.keras.applications.ResNet50(weights='imagenet')
 folder_path = r'C:\Users\aalon\OneDrive\Pictures\iCloud Photos from Danielle Hildebrand'
 
 # Initialize the seen images dictionary
-seen_images = defaultdict(float)
+seen_images = defaultdict(lambda: {"count": 0, "order": 0})
+unique_item_order = 1
 
 # Get the image files
 image_files = [f for f in os.listdir(folder_path) if os.path.splitext(f)[1].lower() in ('.jpg', '.jpeg', '.png', '.bmp')]
@@ -41,14 +42,16 @@ for filename in image_files:
 
     # Check if the predicted image has already been seen
     image_key = (label, description)
-    if seen_images[image_key] == 0:
-        seen_images[image_key] = 1.0
+    if seen_images[image_key]["count"] == 0:
+        seen_images[image_key]["count"] = 1.0
+        seen_images[image_key]["order"] = unique_item_order
+        unique_item_order += 1
     else:
-        seen_images[image_key] += 0.1
-    image_counter = seen_images[image_key]
+        seen_images[image_key]["count"] += 0.1
+    image_counter = seen_images[image_key]["count"]
 
-    # Rename the file with the predicted label, confidence, and image counter
-    new_filename = f"{confidence:.2%}_{description}_{image_counter:.1f}{os.path.splitext(filename)[1]}"
+    # Rename the file with the predicted label, image counter, and confidence
+    new_filename = f"{description}_{seen_images[image_key]['order']}.{image_counter:.1f}_{confidence:.2%}{os.path.splitext(filename)[1]}"
     os.rename(os.path.join(folder_path, filename), os.path.join(folder_path, new_filename))
 
     # Update the progress counter
